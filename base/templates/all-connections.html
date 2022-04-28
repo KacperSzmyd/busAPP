@@ -1,0 +1,7 @@
+{% extends 'main.html' %}
+
+{% block content %}
+    {% for connection in plan %}
+        <h3>{{ connection }}</h3>
+    {% endfor %}
+{% endblock content %}
