@@ -1,12 +1,26 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from .models import Ride
 
 
 def check_bus_route(bus, start, stop):
     cities_in_route = bus.cities_where_collect_passengers
-    if start in cities_in_route and stop in cities_in_route:
+    if str(start) in cities_in_route and str(stop) in cities_in_route:
         if cities_in_route.index(start) < cities_in_route.index(stop):
             return True
+    return False
+
+
+def all_to_city(bus, end):
+    cities_in_route = bus.cities_where_collect_passengers.split(',')
+    if str(end) in cities_in_route and cities_in_route.index(end) != 0:
+        return True
+    return False
+
+
+def all_from_city(bus, start):
+    cities_in_route = bus.cities_where_collect_passengers.split(',')
+    if start in cities_in_route and cities_in_route.index(start) != len(cities_in_route)-1:
+        return True
     return False
 
 
@@ -22,22 +36,44 @@ def find_bus(request):
     method = 'GET'
     if request.method == 'POST':
         method = 'POST'
-        first_point = request.POST.get('first_stop').title()
-        last_point = request.POST.get('end_stop').title()
+        first_point = request.POST.get('first_stop').strip().title()
+        last_point = request.POST.get('end_stop').strip().title()
         express = request.POST.get('express')
 
         # taking plan for all express busses
         express_busses = Ride.objects.filter(is_express=True)
-        # checking if any bus cover first and last point and if it is going in right direction
-        filtered_express_busses = [bus for bus in express_busses if check_bus_route(bus, first_point, last_point)]
 
         # taking plan for all non-express busses
         standard_busses = Ride.objects.filter(is_express=False)
+
+        # covering empty first point case
+        if first_point == '':
+            filtered_express_busses = [bus for bus in express_busses if all_to_city(bus, last_point)]
+            filtered_standard_busses = [bus for bus in standard_busses if all_to_city(bus, last_point)]
+            context = {'express_busses': filtered_express_busses,
+                       'standard_busses': filtered_standard_busses,
+                       'is_express': express,
+                       'method': method}
+            return render(request, 'home.html', context)
+
+        # covering empty last point case
+        if last_point is None or last_point == '':
+            filtered_express_busses = [bus for bus in express_busses if all_from_city(bus, first_point)]
+            filtered_standard_busses = [bus for bus in standard_busses if all_from_city(bus, first_point)]
+            context = {'express_busses': filtered_express_busses,
+                       'standard_busses': filtered_standard_busses,
+                       'is_express': express,
+                       'method': method}
+            return render(request, 'home.html', context)
+
+        # checking if any bus cover first and last point and if it is going in right direction
+        filtered_express_busses = [bus for bus in express_busses if check_bus_route(bus, first_point, last_point)]
+
         # checking if any non-express bus cover first and last point and if it is going in right direction
-        standard_busses = [bus for bus in standard_busses if check_bus_route(bus, first_point, last_point)]
+        filtered_standard_busses = [bus for bus in standard_busses if check_bus_route(bus, first_point, last_point)]
 
         context = {'express_busses': filtered_express_busses,
-                   'standard_busses': standard_busses,
+                   'standard_busses': filtered_standard_busses,
                    'is_express': express,
                    'method': method}
         return render(request, 'home.html', context)
