@@ -1,0 +1,9 @@
+{% block content %}
+    {% if request.user.is_authenticated %}
+        <h2>Hello @{{ request.user.username }}</h2>
+        <small><p><a href="{% url 'logoutUser' %}">logout</a></p></small>
+
+    {% else %}
+        <h4><a href="{% url 'loginUser' %}">Sign in!</a></h4>
+    {% endif %}
+{% endblock content %}

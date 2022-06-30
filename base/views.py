@@ -1,4 +1,7 @@
-from django.shortcuts import render
+from django.contrib import messages
+from django.contrib.auth import logout, login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import render, redirect
 from .models import Ride
 
 
@@ -19,7 +22,7 @@ def all_to_city(bus, end):
 
 def all_from_city(bus, start):
     cities_in_route = bus.cities_where_collect_passengers.split(',')
-    if start in cities_in_route and cities_in_route.index(start) != len(cities_in_route)-1:
+    if start in cities_in_route and cities_in_route.index(start) != len(cities_in_route) - 1:
         return True
     return False
 
@@ -88,3 +91,39 @@ def get_single_bus(request, pk):
     context = {'bus': bus,
                'cities': cities}
     return render(request, 'bus.html', context)
+
+
+def registerUser(request):
+    page = 'register'
+    form = UserCreationForm
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            form.save()
+            login(request, user)
+            return redirect('plan')
+        else:
+            messages.error(request, "An error occurred during registration")
+    context = {'form': form,
+               'page': page}
+    return render(request, 'login-register.html', context)
+
+
+def loginUser(request):
+    if request.user.is_authenticated:
+        redirect('plan')
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('plan')
+
+    return render(request, 'login-register.html')
+
+
+def logoutUser(request):
+    logout(request)
+    return redirect('plan')
