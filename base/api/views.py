@@ -4,8 +4,9 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from .serializers import RideSerializer, UserSerializer, RideMiniSerializer
-from base.models import Ride
+
+from .serializers import RideSerializer, RideMiniSerializer, UserMiniSerializer
+from base.models import Ride, Ticket
 
 
 class RideSetPagination(PageNumberPagination):
@@ -16,9 +17,26 @@ class RideSetPagination(PageNumberPagination):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserMiniSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    @action(detail=True, methods=['GET'])
+    def tickets(self, request, *args, **kwargs):
+        user = self.get_object()
+        if request.user.is_authenticated and request.user == user:
+            TICKETS = Ticket.objects.filter(owner=user)
+            tickets_list = [str(ticket) for ticket in TICKETS]
+            price_sum = sum([ticket.bus.price for ticket in TICKETS])
+            avg_price = price_sum / len(tickets_list)
+            context = {'User': user.username,
+                       'tickets count': len(tickets_list),
+                       'tickets list': tickets_list,
+                       'Money spent on tickets': price_sum,
+                       'Average ticket cost': avg_price}
+            return Response(context)
+        else:
+            return Response({'Acces': 'Denied'})
 
 
 class RideViewSet(viewsets.ModelViewSet):
@@ -49,4 +67,4 @@ class RideViewSet(viewsets.ModelViewSet):
         output = Ride.objects.filter(pk__in=list_of_ids)
 
         serializer = RideMiniSerializer(output, many=True)
-        return Response(serializer.data)
+        return Response({serializer.data})

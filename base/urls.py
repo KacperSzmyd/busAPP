@@ -8,5 +8,7 @@ urlpatterns = [
 
     path('login/', loginUser, name='loginUser'),
     path('logout/', logoutUser, name='logoutUser'),
-    path('register/', registerUser, name='registerUser')
+    path('register/', registerUser, name='registerUser'),
+
+    path('profile/<str:pk>/', userProfile, name='profile')
 ]

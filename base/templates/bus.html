@@ -22,4 +22,14 @@
             Non-express
         {% endif %}
     </p>
+
+    {% if request.user.is_authenticated %}
+
+        <hr>
+        <form action="" method="post">
+            {% csrf_token %}
+            <input type="submit" value="Add to your history">
+        </form>
+    {% endif %}
+
 {% endblock content %}

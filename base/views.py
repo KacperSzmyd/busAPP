@@ -1,8 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth import logout, login, authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.db.models import Avg
 from django.shortcuts import render, redirect
-from .models import Ride
+from .models import Ride, Ticket
 
 
 def check_bus_route(bus, start, stop):
@@ -88,6 +91,12 @@ def find_bus(request):
 def get_single_bus(request, pk):
     bus = Ride.objects.get(id=pk)
     cities = bus.cities_where_collect_passengers.split(',')
+
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            Ticket.objects.create(owner=request.user, bus=bus)
+            return redirect('bus', pk)
+
     context = {'bus': bus,
                'cities': cities}
     return render(request, 'bus.html', context)
@@ -127,3 +136,16 @@ def loginUser(request):
 def logoutUser(request):
     logout(request)
     return redirect('plan')
+
+
+def userProfile(request, pk):
+    user = User.objects.get(id=pk)
+    tickets = Ticket.objects.filter(owner=user)
+    price_sum = sum([ticket.bus.price for ticket in tickets])
+    avg_price = price_sum/tickets.count()
+
+    context = {'user': user,
+               'tickets': tickets,
+               'avg_price': avg_price,
+               'price_sum': price_sum}
+    return render(request, 'profile.html', context)

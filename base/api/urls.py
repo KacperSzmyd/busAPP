@@ -8,7 +8,6 @@ router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'rides', RideViewSet)
 
-
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router.urls)),
 ]
