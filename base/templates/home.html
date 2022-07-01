@@ -54,4 +54,12 @@
     {% if not express_busses and not standard_busses and method == 'POST'%}
         <p> There is no buss runs this route</p>
     {% endif %}
+
+    {% if cities %}
+    <br><hr>
+    <h4>We cover travels through these cities:</h4>
+        {% for city in cities %}
+            <small><p>{{ city }}</p></small>
+        {% endfor %}
+    {% endif %}
 {% endblock content %}

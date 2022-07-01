@@ -1,33 +1,10 @@
-from django.contrib import messages
+from .rides_functuins import all_to_city, all_from_city, check_bus_route, cities_list
 from django.contrib.auth import logout, login, authenticate
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
-from django.db.models import Avg
 from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
+from django.contrib import messages
 from .models import Ride, Ticket
-
-
-def check_bus_route(bus, start, stop):
-    cities_in_route = bus.cities_where_collect_passengers
-    if str(start) in cities_in_route and str(stop) in cities_in_route:
-        if cities_in_route.index(start) < cities_in_route.index(stop):
-            return True
-    return False
-
-
-def all_to_city(bus, end):
-    cities_in_route = bus.cities_where_collect_passengers.split(',')
-    if str(end) in cities_in_route and cities_in_route.index(end) != 0:
-        return True
-    return False
-
-
-def all_from_city(bus, start):
-    cities_in_route = bus.cities_where_collect_passengers.split(',')
-    if start in cities_in_route and cities_in_route.index(start) != len(cities_in_route) - 1:
-        return True
-    return False
 
 
 def get_rides_plan(request):
@@ -39,6 +16,7 @@ def get_rides_plan(request):
 
 
 def find_bus(request):
+    cities = cities_list()
     method = 'GET'
     if request.method == 'POST':
         method = 'POST'
@@ -84,7 +62,8 @@ def find_bus(request):
                    'method': method}
         return render(request, 'home.html', context)
 
-    context = {'method': method}
+    context = {'method': method,
+               'cities': cities}
     return render(request, 'home.html', context)
 
 
@@ -142,10 +121,13 @@ def userProfile(request, pk):
     user = User.objects.get(id=pk)
     tickets = Ticket.objects.filter(owner=user)
     price_sum = sum([ticket.bus.price for ticket in tickets])
-    avg_price = price_sum/tickets.count()
+    avg_price = price_sum / tickets.count()
 
     context = {'user': user,
                'tickets': tickets,
                'avg_price': avg_price,
                'price_sum': price_sum}
     return render(request, 'profile.html', context)
+
+
+

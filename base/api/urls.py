@@ -10,4 +10,5 @@ router.register(r'rides', RideViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('cities/', cities)
 ]

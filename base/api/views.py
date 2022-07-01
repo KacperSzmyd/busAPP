@@ -1,12 +1,12 @@
 from django.contrib.auth.models import User
 from rest_framework import viewsets, permissions
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-
 from .serializers import RideSerializer, RideMiniSerializer, UserMiniSerializer
 from base.models import Ride, Ticket
+from ..rides_functuins import cities_list
 
 
 class RideSetPagination(PageNumberPagination):
@@ -25,9 +25,9 @@ class UserViewSet(viewsets.ModelViewSet):
     def tickets(self, request, *args, **kwargs):
         user = self.get_object()
         if request.user.is_authenticated and request.user == user:
-            TICKETS = Ticket.objects.filter(owner=user)
-            tickets_list = [str(ticket) for ticket in TICKETS]
-            price_sum = sum([ticket.bus.price for ticket in TICKETS])
+            query = Ticket.objects.filter(owner=user)
+            tickets_list = [str(ticket) for ticket in query]
+            price_sum = sum([ticket.bus.price for ticket in query])
             avg_price = price_sum / len(tickets_list)
             context = {'User': user.username,
                        'tickets count': len(tickets_list),
@@ -58,7 +58,7 @@ class RideViewSet(viewsets.ModelViewSet):
         serializer = RideSerializer(ride, many=False)
         return Response(serializer.data)
 
-    # Ride objects which contains city taken from query param in 'bus.cities_where_collect_passengers'
+    # Ride objects, which contains city taken from query param in 'bus.cities_where_collect_passengers'
     @action(detail=False, methods=['get'])
     def routes(self, request, *args, **kwargs):
         q = self.request.query_params['city']
@@ -68,3 +68,9 @@ class RideViewSet(viewsets.ModelViewSet):
 
         serializer = RideMiniSerializer(output, many=True)
         return Response({serializer.data})
+
+
+@api_view(['GET'])
+def cities(request):
+    context = dict(enumerate(cities_list(), start=1))
+    return Response(context)
