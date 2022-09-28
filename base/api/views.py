@@ -74,3 +74,5 @@ class RideViewSet(viewsets.ModelViewSet):
 def cities(request):
     context = dict(enumerate(cities_list(), start=1))
     return Response(context)
+
+
