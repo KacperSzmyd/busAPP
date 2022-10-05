@@ -84,7 +84,7 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'busappdb',
+        'NAME': config('DB'),
         'USER': config('USER'),
         'PASSWORD': config('PASSWORD'),
         'HOST': '127.0.0.1',
